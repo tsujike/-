@@ -1,0 +1,55 @@
+# ワークフローの名前 (GitHubのActionsタブで表示される)
+name: Run Python JSON Creator
+
+# ワークフローが実行されるトリガー (きっかけ)
+# ★★★ ここはあなたの目的に合わせて変更してください ★★★
+on:
+  push:
+    branches:
+      - main  # 例: mainブランチにpushされたときに実行
+  workflow_dispatch: # これを追加すると、GitHubの画面から手動で実行できるようになります
+
+# 実行されるジョブの定義
+jobs:
+  # ジョブのID (任意の名前)
+  build-and-run-script:
+    # ジョブが実行される仮想環境 (OS)
+    runs-on: ubuntu-latest
+
+    # ジョブ内のステップ (実行されるコマンド群)
+    steps:
+      # ステップ1: リポジトリのコードをチェックアウト(ダウンロード)する
+      # これがないと、リポジトリ内のファイルにアクセスできません
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ステップ2: Python環境をセットアップする
+      # actions/setup-python は公式のアクションで、指定したバージョンのPythonを準備してくれます
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10' # ★★★ あなたのスクリプトが要求するPythonのバージョンに合わせてください ★★★
+
+      # ステップ3: (もしあれば) 必要なPythonライブラリをインストールする
+      # スクリプトが requests, pandas などの外部ライブラリを使っている場合は、
+      # requirements.txt ファイルにライブラリ名を記述しておき、ここでインストールします。
+      # ライブラリが不要な場合は、このステップは削除してもOKです。
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      # ステップ4: Pythonスクリプトを実行する
+      # ここで json_create.py を実行します
+      - name: Run json_create.py script
+        run: python json_create.py
+
+      # ステップ5: (任意) 生成されたJSONファイルをアーティファクトとして保存する
+      # スクリプトがJSONファイルを生成する場合、その結果をダウンロードできるように
+      # アーティファクトとして保存しておくと便利です。
+      # このステップが不要な場合は削除してください。
+      - name: Upload generated JSON file
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-json # アーティファクトの名前 (任意)
+          path: path/to/your/generated_file.json # ★★★ スクリプトが生成するJSONファイルのパスを指定 ★★★
